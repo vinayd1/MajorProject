@@ -1,9 +1,16 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import './App.css';
 import NavBar from './NavBar';
 import Loader from './Loader';
 import Web3 from 'web3';
 import Contract from '../abis/Contract';
+
+const Api = axios.create({
+  baseURL: 'http://localhost:8000/',
+  timeout: 1000,
+  responseType: "json"
+})
 
 class App extends Component {
 
@@ -13,13 +20,23 @@ class App extends Component {
       loading: true,
       error: false,
       account: null,
+      authorities: []
     }
   }
 
   async componentDidMount() {
+    await this.getAuthorities();
     await this.loadWeb3();
     await this.loadBlockchainData();
     this.setState({ loading: false })
+  }
+
+  getAuthorities = async () => {
+    try {
+      const {data} = await Api.get(`authority`);
+      this.setState({authorities: data})
+      console.table(data)
+    } catch (err) { console.error(err) }
   }
 
   loadWeb3 = async () => {
