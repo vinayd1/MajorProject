@@ -1,7 +1,7 @@
 # MajorProject
 
 **Steps:**
-- Instantiate Ganache
-- `truffle migrate`
-- `npm start`
-- Connect to Metamask
+- [x] Instantiate Ganache
+- [x] `truffle migrate`
+- [x] `npm start`
+- [x] Connect to Metamask
