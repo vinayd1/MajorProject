@@ -47,7 +47,7 @@ app.post('/authority', async (req, res) => {
 
 const f = async (authority) => {
     const x = new Promise((res, rej) => {
-        connection.query(`Select PrivateKey from Authority where AuthorityName='${authority}';`, (err, data) => {
+        connection.query(`Select PrivateKey from Authority where PublicKey='${authority}';`, (err, data) => {
             if (err)
                 rej(err);
             res(data[0] && data[0].PrivateKey);
@@ -59,8 +59,9 @@ const f = async (authority) => {
 }
 
 app.post('/sign', async (req, res) => {
-    const rawData = req.body.jsonObject.attributes;
-    const userPublicKey = req.body.jsonObject.userPublicKey;
+    console.log(req.body)
+    const rawData = req.body.attributes;
+    const userPublicKey = req.body.userPublicKey;
     const signedData = [];
 
     for (const obj of rawData) {
