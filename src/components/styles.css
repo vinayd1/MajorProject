@@ -1,0 +1,13 @@
+.rounded-border {
+    border: 1px solid #dde1e6;
+    border-radius: 5px;
+    align-items: center;
+}
+
+.fw-450 {
+    font-weight: 450;
+}
+
+.pointer {
+    cursor: pointer;
+}

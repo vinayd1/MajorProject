@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-contract DecentralizedIdentity {
+contract Contract {
 
     mapping(address => Identity) identities;
     mapping(uint => VerificationData) verificationDataList;

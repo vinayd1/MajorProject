@@ -6,6 +6,9 @@ import Loader from './Loader';
 import Web3 from 'web3';
 import Contract from '../abis/Contract';
 import Form from 'antd/lib/form/Form';
+import ipfsClient from 'ipfs-http-client';
+import CreateIdentity from './CreateIdentity';
+const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: '5001', protocol: 'https' });
 
 const Api = axios.create({
   baseURL: 'http://localhost:8000/',
@@ -29,6 +32,7 @@ class App extends Component {
     await this.getAuthorities();
     await this.loadWeb3();
     await this.loadBlockchainData();
+    console.log(this.state)
     this.setState({ loading: false })
   }
 
@@ -36,7 +40,6 @@ class App extends Component {
     try {
       const { data } = await Api.get(`authority`);
       this.setState({ authorities: data })
-      console.table(data)
     } catch (err) { console.error(err) }
   }
 
@@ -57,13 +60,11 @@ class App extends Component {
     const contractAddress = Contract.networks[5777].address;
     const contract = new web3.eth.Contract(Contract.abi, contractAddress);
 
-
     this.setState(() => {
       return { account, contract }
     });
-    await this.getEvents();
+    await this.getIdentity();
 
-    console.log(this.state);
   }
 
   getEvents = async () => {
@@ -77,30 +78,32 @@ class App extends Component {
     });
   }
 
-  triggerContract = async () => {
-    const { contract, account } = this.state;
-    try {
-      await contract.methods.trigger(123).send({ from: account });
-      await this.getEvents();
-    } catch (e) {
-      console.error(e);
-    }
-    console.log(this.state);
+  getIdentity = async () => {
+    const {contract, account} = this.state;
+    const path = await contract.methods.getIdentity().call({from: account});
+    if(!path) return this.setState({userData: [], identity: false});
+    const data = (await (await ipfs.get(path).next()).value.content.next()).value.toString();
+    this.setState({
+      userData: JSON.parse(data),
+      identity: true
+    })
   }
 
   createIdentity = async (data, authority) => {
-    const keys = Object.keys(data);
-    const request = keys.map(key => ({
-      key, value: data[key], authority
-    }));
+    const {contract, account} = this.state
+    // const keys = Object.keys(data);
+    // const request = keys.map(key => ({
+    //   key, value: data[key], authority
+    // }));
 
     const response = await Api.post('sign', {
-      attributes: request,
+      attributes: data,
       userPublicKey: this.state.account
     });
-    const {web3} = window
-    const signedData = response.data.map(({sign} = {}) => sign)
-    console.log(signedData);
+    const signedData = response.data.map(({ sign } = {}) => sign)
+    const buf = Buffer.from(JSON.stringify(signedData));
+    const d = await ipfs.add(buf).next();
+    await contract.methods.createIdentity(d.value.path).send({from: account});
   }
 
   render() {
@@ -114,60 +117,10 @@ class App extends Component {
           <h1 className="text-center">Create Your Digital Identity</h1>
           <div className="py-2" />
           <div className="row">
-            <main role="main" className="col-lg-12 d-flex text-center">
-              <div className="content mx-auto" style={{ width: "500px" }}>
-                <a
-                  href="https://www.coinbase.com/price/dai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {/* <img src={"https://dynamic-assets.coinbase.com/90184cca292578d533bb00d9ee98529b889c15126bb120582309286b9129df9886781b30c85c21ee9cae9f2db6dc11e88633c7361fdd1ba5046ea444e101ae15/asset_icons/ebc24b163bf1f58a9732a9a1d2faa5b2141b041d754ddc2260c5e76edfed261e.png"} width={"150"} className="App-logo" alt="logo" /> */}
-                </a>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const name = this.name.value;
-                  const age = this.age.value;
-                  const authority = this.authority.value;
-                  this.createIdentity({name, age}, authority);
-                }}>
-                  <div className="form-group mr-sm-2">
-                    <input
-                      id="name"
-                      type="text"
-                      ref={(inp) => { this.name = inp }}
-                      className="form-control"
-                      placeholder="Name"
-                      required />
-                  </div>
-                  <div className="form-group mr-sm-2">
-                    <input
-                      id="age"
-                      type="number"
-                      step="1"
-                      min="1"
-                      ref={(inp) => { this.age = inp }}
-                      className="form-control"
-                      placeholder="Age"
-                      required />
-                  </div>
-                  <div className="form-group mr-sm-2">
-                    <select
-                      defaultValue=""
-                      id="authority"
-                      ref={(inp) => { this.authority = inp }}
-                      className="form-control"
-                      required
-                    >
-                      <option value="" disabled>Select an authority</option>
-                      {
-                        authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
-                          {authority.AuthorityName} ({authority.PublicKey})
-                      </option>)
-                      }
-                    </select>
-                  </div>
-                  <button type="submit" className="btn btn-primary btn-block">Send</button>
-                </form>
+            <main role="main" className="col-lg-12 d-flex text-center px-0">
+              <div className="content mx-auto" style={{ width: "800px" }}>
+               
+                <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />
                 {/* <table className="table">
                   <thead>
                     <tr>
