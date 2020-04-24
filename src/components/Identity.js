@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import './styles.css';
 import CreateIdentity from './CreateIdentity';
-import Modal from './Modal';
 
 export default class Identity extends Component {
     constructor(props) {
@@ -20,7 +19,7 @@ export default class Identity extends Component {
         const [dob] = data.filter(item => item.key === "DOB").map((item) => ({ val: item.value, authority: item.authority }))
 
         const otherData = data.filter(item => item.key !== "DOB" && item.key !== "Name")
-            .map((item) => ({ val: item.value, authority: item.authority }))
+            .map((item) => ({ key: item.key, type: '',val: item.value, authority: item.authority }))
 
         return <div>
             <h2 className="text-center">Edit your Identity</h2>
@@ -29,14 +28,15 @@ export default class Identity extends Component {
             }} createIdentity={async (data) => {
                 await editIdentity(data);
                 this.setState({ edit: false })
-            }} authorities={authorities} />
+            }} authorities={authorities} 
+            buttonText="Edit Identity"/>
         </div>
     }
 
     render = () => this.state.edit ? this.getEditModal() : <>
         <div className="content mx-auto" style={{ width: "800px" }}>
             <div className="d-flex justify-content-end align-items-center">
-                <p className="m-0 pointer" onClick={() => this.setState({ edit: true })}>Edit</p>
+                <p className="m-0 pointer text-primary fw-450" onClick={() => this.setState({ edit: true })}>Edit</p>
             </div>
             <table className="table">
                 <thead>

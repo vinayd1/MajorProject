@@ -19,13 +19,13 @@ export default class CreateIdentity extends Component {
             val: '',
             authority: null
         },
-        data: []
+        data: this.props.data && this.props.data.data
     }
 
     getInput = (data, index) => <div key={index} className="row py-1">
         <div className="col-3 px-0">
             <input
-            value={data.key || ''}
+                value={data.key || ''}
                 id={`key-${index}`}
                 type="text"
                 onChange={(inp) => {
@@ -59,7 +59,7 @@ export default class CreateIdentity extends Component {
         </div>
         <div className="col-3">
             <input
-            value={data.val || ''}
+                value={data.val || ''}
                 id={`value-${index}`}
                 type={this.state.data[index].type}
                 onChange={(inp) => {
@@ -112,7 +112,7 @@ export default class CreateIdentity extends Component {
                 authority: item.authority,
             }))
         ];
-        console.log({requestData})
+        console.log({ requestData })
         this.props.createIdentity(requestData)
     }
 
@@ -197,7 +197,7 @@ export default class CreateIdentity extends Component {
             </div>
             <div className="py-3" />
             <div className="d-flex justify-content-center align-items-center">
-                <button className="btn btn-primary btn-block w-50" onClick={this.submit}>Create Identity</button>
+                <button className="btn btn-primary btn-block w-50" onClick={this.submit}>{this.props.buttonText || "Create Identity"}</button>
             </div>
         </div>
     }
