@@ -11,20 +11,21 @@ const selectType = [
 export default class CreateIdentity extends Component {
 
     state = {
-        name: {
+        name: this.props.data && this.props.data.name || {
             val: '',
             authority: null
         },
-        age: {
+        dob: this.props.data && this.props.data.dob || {
             val: '',
             authority: null
         },
         data: []
     }
 
-    getInput = (data, index) => <div className="row py-1">
+    getInput = (data, index) => <div key={index} className="row py-1">
         <div className="col-3 px-0">
             <input
+            value={data.key || ''}
                 id={`key-${index}`}
                 type="text"
                 onChange={(inp) => {
@@ -38,7 +39,7 @@ export default class CreateIdentity extends Component {
         </div>
         <div className="col-3 pr-0">
             <select
-                defaultValue=""
+                defaultValue='text'
                 id={`type-${index}`}
                 onChange={(inp) => {
                     const { data } = this.state;
@@ -58,6 +59,7 @@ export default class CreateIdentity extends Component {
         </div>
         <div className="col-3">
             <input
+            value={data.val || ''}
                 id={`value-${index}`}
                 type={this.state.data[index].type}
                 onChange={(inp) => {
@@ -71,11 +73,11 @@ export default class CreateIdentity extends Component {
         </div>
         <div className="col-3 px-0">
             <select
-                defaultValue=""
+                defaultValue={data.authority || ''}
                 id={`authority-${index}`}
-                onChange={(inp) => { 
+                onChange={(inp) => {
                     const { data } = this.state;
-                    data[index].authority = inp && inp.authority;
+                    data[index].authority = inp.target.value;
                     this.setState({ data });
                 }}
                 className="form-control"
@@ -102,7 +104,7 @@ export default class CreateIdentity extends Component {
             {
                 key: "DOB",
                 value: dob.val,
-                authority: name.authority,
+                authority: dob.authority,
             },
             ...data.map(item => ({
                 key: item.key,
@@ -110,8 +112,8 @@ export default class CreateIdentity extends Component {
                 authority: item.authority,
             }))
         ];
-
-        return this.props.createIdentity(requestData)
+        console.log({requestData})
+        this.props.createIdentity(requestData)
     }
 
     addMore = () => {
@@ -125,82 +127,78 @@ export default class CreateIdentity extends Component {
         this.setState({ data })
     }
 
-    render = () => <>
-        <div className="row py-1">
-            <div className="col-6 rounded-border py-1">Name: </div>
-            <div className="col-3">
-                <input
-                    id="name"
-                    type="text"
-                    onChange={(inp) => { inp && this.setState({ name: { ...this.state.name, val: inp.target.value } }) }}
-                    className="form-control"
-                    placeholder="Enter name"
-                    required />
-            </div>
-            <div className="col-3 px-0">
-                <select
-                    defaultValue=""
-                    id="authority-name"
-                    onChange={(inp) => { inp && this.setState({ name: { ...this.state.name, authority: inp.target.value } }) }}
-                    className="form-control"
-                    required
-                >
-                    <option value="" disabled>Select an authority</option>
-                    {
-                        this.props.authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
-                            {authority.AuthorityName} ({authority.PublicKey})
+    render = () => {
+        const { name, dob } = this.state;
+        return <div className="content mx-auto" style={{ width: "800px" }}>
+            <div className="row py-1">
+                <div className="col-6 rounded-border py-1">Name: </div>
+                <div className="col-3">
+                    <input
+                        value={name.val || ''}
+                        id="name"
+                        type="text"
+                        onChange={(inp) => { inp && this.setState({ name: { ...this.state.name, val: inp.target.value } }) }}
+                        className="form-control"
+                        placeholder="Enter name"
+                        required />
+                </div>
+                <div className="col-3 px-0">
+                    <select
+                        defaultValue={name.authority || ''}
+                        id="authority-name"
+                        onChange={(inp) => { inp && this.setState({ name: { ...this.state.name, authority: inp.target.value } }) }}
+                        className="form-control"
+                        required
+                    >
+                        <option value="" disabled>Select an authority</option>
+                        {
+                            this.props.authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
+                                {authority.AuthorityName} ({authority.PublicKey})
                 </option>)
-                    }
-                </select>
+                        }
+                    </select>
+                </div>
             </div>
-        </div>
-        <div className="row py-1">
-            <div className="col-6 rounded-border py-1">Age:</div>
-            <div className="col-3">
-                <input
-                    id="dob"
-                    type="date"
-                    onChange={(inp) => { inp && this.setState({ name: { ...this.state.name, val: inp.target.value } }) }}
-                    className="form-control"
-                    placeholder="Enter Date of birth"
-                    required />
-            </div>
-            <div className="col-3 px-0">
-                <select
-                    defaultValue=""
-                    id="authority-dob"
-                    onChange={(inp) => { inp && this.setState({ dob: { ...this.state.dob, authority: inp.target.value } }) }}
-                    className="form-control"
-                    required
-                >
-                    <option value="" disabled>Select an authority</option>
-                    {
-                        this.props.authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
-                            {authority.AuthorityName} ({authority.PublicKey})
+            <div className="row py-1">
+                <div className="col-6 rounded-border py-1">Date of Birth:</div>
+                <div className="col-3">
+                    <input
+                        value={dob.val || ''}
+                        id="dob"
+                        type="date"
+                        onChange={(inp) => { inp && this.setState({ dob: { ...this.state.dob, val: inp.target.value } }) }}
+                        className="form-control"
+                        placeholder="Enter Date of birth"
+                        required />
+                </div>
+                <div className="col-3 px-0">
+                    <select
+                        defaultValue={dob.authority || ''}
+                        id="authority-dob"
+                        onChange={(inp) => { inp && this.setState({ dob: { ...this.state.dob, authority: inp.target.value } }) }}
+                        className="form-control"
+                        required
+                    >
+                        <option value="" disabled>Select an authority</option>
+                        {
+                            this.props.authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
+                                {authority.AuthorityName} ({authority.PublicKey})
                         </option>
-                        )
-                    }
-                </select>
+                            )
+                        }
+                    </select>
+                </div>
+            </div>
+            {
+                this.state.data.map((item, index) => this.getInput(item, index))
+            }
+            <div className="d-flex justify-content-end align-items-center">
+                <p className="m-0 text-primary fw-450 pointer" onClick={this.addMore}>+ Add more data</p>
+            </div>
+            <div className="py-3" />
+            <div className="d-flex justify-content-center align-items-center">
+                <button className="btn btn-primary btn-block w-50" onClick={this.submit}>Create Identity</button>
             </div>
         </div>
-        {
-            this.state.data.map((item, index) => this.getInput(item, index))
-        }
-        <div className="d-flex justify-content-end align-items-center">
-            <p className="m-0 text-primary fw-450 pointer" onClick={this.addMore}>+ Add more data</p>
-        </div>
-        <div className="py-3" />
-        <div className="d-flex justify-content-center align-items-center">
-            <button className="btn btn-primary btn-block w-50" onClick={this.submit}>Create Identity</button>
-        </div>
-    </>
+    }
 }
-
-
-{/* <form onSubmit={(e) => {
-        e.preventDefault();
-        const name = this.name.value;
-        const dob = this.dob.value;
-        const authority = this.authority.value;
-        this.props.createIdentity({ name, dob }, authority); */}
-    // }}></form>

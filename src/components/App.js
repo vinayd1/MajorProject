@@ -8,11 +8,11 @@ import Contract from '../abis/Contract';
 import Form from 'antd/lib/form/Form';
 import ipfsClient from 'ipfs-http-client';
 import CreateIdentity from './CreateIdentity';
+import Identity from './Identity';
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: '5001', protocol: 'https' });
 
 const Api = axios.create({
   baseURL: 'http://localhost:8000/',
-  timeout: 1000,
   responseType: "json"
 })
 
@@ -32,6 +32,7 @@ class App extends Component {
     await this.getAuthorities();
     await this.loadWeb3();
     await this.loadBlockchainData();
+    await this.getIdentity();
     console.log(this.state)
     this.setState({ loading: false })
   }
@@ -63,7 +64,6 @@ class App extends Component {
     this.setState(() => {
       return { account, contract }
     });
-    await this.getIdentity();
 
   }
 
@@ -79,22 +79,20 @@ class App extends Component {
   }
 
   getIdentity = async () => {
-    const {contract, account} = this.state;
-    const path = await contract.methods.getIdentity().call({from: account});
-    if(!path) return this.setState({userData: [], identity: false});
-    const data = (await (await ipfs.get(path).next()).value.content.next()).value.toString();
+    const { contract, account, authorities } = this.state;
+    const path = await contract.methods.getIdentity().call({ from: account });
+    if (!path) return this.setState({ userData: [], identity: false });
+    const data = JSON.parse((await (await ipfs.get(path).next()).value.content.next()).value.toString());
     this.setState({
-      userData: JSON.parse(data),
+      processedData: this.getProcessedData(data, authorities),
+      userData: data,
       identity: true
     })
   }
 
-  createIdentity = async (data, authority) => {
-    const {contract, account} = this.state
-    // const keys = Object.keys(data);
-    // const request = keys.map(key => ({
-    //   key, value: data[key], authority
-    // }));
+  createIdentity = async (data) => {
+    console.log({data})
+    const { contract, account } = this.state
 
     const response = await Api.post('sign', {
       attributes: data,
@@ -103,48 +101,48 @@ class App extends Component {
     const signedData = response.data.map(({ sign } = {}) => sign)
     const buf = Buffer.from(JSON.stringify(signedData));
     const d = await ipfs.add(buf).next();
-    await contract.methods.createIdentity(d.value.path).send({from: account});
+    await contract.methods.createIdentity(d.value.path).send({ from: account });
+    this.setState({loading: true})
+    await this.getIdentity();
+    this.setState({loading: false})
   }
 
+  getProcessedData = (data, authorities = []) => data.map(item => {
+    const authority = window.web3.eth.accounts.recover(item);
+    const [{ AuthorityName } = {}] = authorities.filter(({ PublicKey } = {}) => PublicKey === authority);
+    const newData = JSON.parse(item.message)
+    if (authority && AuthorityName)
+      return { ...newData, authorityName: AuthorityName, authority }
+  });
+
+
   render() {
-    const { loading, account, authorities } = this.state;
+    const { loading, account, authorities, identity, processedData } = this.state;
+
     if (loading)
       return <Loader className="my-5" />
-    return (
-      <div>
-        <NavBar name="Major Project" account={account} />
-        <div className="container mt-5 pt-5">
-          <h1 className="text-center">Create Your Digital Identity</h1>
-          <div className="py-2" />
-          <div className="row">
-            <main role="main" className="col-lg-12 d-flex text-center px-0">
-              <div className="content mx-auto" style={{ width: "800px" }}>
-               
-                <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />
-                {/* <table className="table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Recipient</th>
-                      <th scope="col">value</th>
-                      <th scope="col">Flow</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {
-                      transactions.map((tx, index) => <tr key={tx.id}>
-                        <td>{tx.returnValues.to}</td>
-                        <td>{window.web3.utils.fromWei(tx.returnValues.value.toString(), 'Ether')}</td>
-                        <td>{tx.flow === "in" ? "Recieved" : "Sent"}</td>
-                      </tr>)
-                    }
-                  </tbody>
-                </table> */}
-              </div>
-            </main>
-          </div>
-        </div>
+
+    return <div>
+      <NavBar name="Major Project" account={account} />
+      <div className="container mt-5 pt-5">
+        <h1 className="text-center">
+          {
+            identity ? <>
+              <p className="mb-1">Digital Identity</p>
+              <p style={{ fontSize: "20px", fontWeight: "500" }}>{account}</p>
+            </> : "Create Your Digital Identity"
+          }
+        </h1>
+        <div className="py-2" />
+        <main role="main" className="d-flex justify-content-center px-0">
+          {
+            identity && Array.isArray(processedData) && processedData.length
+              ? <Identity data={processedData} authorities={authorities} getIdentity={this.getIdentity} editIdentity={this.createIdentity} />
+              : <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />
+          }
+        </main>
       </div>
-    );
+    </div>
   }
 }
 
