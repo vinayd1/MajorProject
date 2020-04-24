@@ -5,10 +5,10 @@ import NavBar from './NavBar';
 import Loader from './Loader';
 import Web3 from 'web3';
 import Contract from '../abis/Contract';
-import Form from 'antd/lib/form/Form';
 import ipfsClient from 'ipfs-http-client';
 import CreateIdentity from './CreateIdentity';
 import Identity from './Identity';
+import Verifier from './Verifier';
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: '5001', protocol: 'https' });
 
 const Api = axios.create({
@@ -24,7 +24,8 @@ class App extends Component {
       loading: true,
       error: false,
       account: null,
-      authorities: []
+      authorities: [],
+      role: 'user'
     }
   }
 
@@ -91,7 +92,7 @@ class App extends Component {
   }
 
   createIdentity = async (data) => {
-    console.log({data})
+    console.log({ data })
     const { contract, account } = this.state
 
     const response = await Api.post('sign', {
@@ -102,9 +103,9 @@ class App extends Component {
     const buf = Buffer.from(JSON.stringify(signedData));
     const d = await ipfs.add(buf).next();
     await contract.methods.createIdentity(d.value.path).send({ from: account });
-    this.setState({loading: true})
+    this.setState({ loading: true })
     await this.getIdentity();
-    this.setState({loading: false})
+    this.setState({ loading: false })
   }
 
   getProcessedData = (data, authorities = []) => data.map(item => {
@@ -115,9 +116,8 @@ class App extends Component {
       return { ...newData, authorityName: AuthorityName, authority }
   });
 
-
   render() {
-    const { loading, account, authorities, identity, processedData } = this.state;
+    const { loading, account, authorities, identity, processedData, role } = this.state;
 
     if (loading)
       return <Loader className="my-5" />
@@ -137,7 +137,29 @@ class App extends Component {
         <main role="main" className="d-flex justify-content-center px-0">
           {
             identity && Array.isArray(processedData) && processedData.length
-              ? <Identity data={processedData} authorities={authorities} getIdentity={this.getIdentity} editIdentity={this.createIdentity} />
+              ? <div>
+                <Identity data={processedData} authorities={authorities} getIdentity={this.getIdentity} editIdentity={this.createIdentity} />
+                <div className="d-flex justify-content-center align-items-center">
+                  <p className="m-0 h3 fw-450">Role:</p>
+                  <div className="px-3" />
+                  <div className="">
+                    <select
+                      defaultValue={role || 'user'}
+                      id="role"
+                      onChange={(inp) => { inp && this.setState({ role: inp.target.value }) }}
+                      className="form-control"
+                      required
+                    >
+                      <option value="user">User</option>
+                      <option value="verifier">Verifier (3rd Party)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="py-2" />
+                {
+                  role === "user"? <></>:<Verifier />
+                }
+              </div>
               : <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />
           }
         </main>

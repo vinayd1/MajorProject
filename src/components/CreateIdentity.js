@@ -19,7 +19,7 @@ export default class CreateIdentity extends Component {
             val: '',
             authority: null
         },
-        data: this.props.data && this.props.data.data
+        data: this.props.data && this.props.data.data || []
     }
 
     getInput = (data, index) => <div key={index} className="row py-1">
@@ -129,6 +129,8 @@ export default class CreateIdentity extends Component {
 
     render = () => {
         const { name, dob } = this.state;
+        const {authorities} = this.props;
+        console.log({authorities})
         return <div className="content mx-auto" style={{ width: "800px" }}>
             <div className="row py-1">
                 <div className="col-6 rounded-border py-1">Name: </div>
@@ -181,7 +183,7 @@ export default class CreateIdentity extends Component {
                     >
                         <option value="" disabled>Select an authority</option>
                         {
-                            this.props.authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
+                            authorities.map((authority) => <option key={authority.PublicKey} value={authority.PublicKey}>
                                 {authority.AuthorityName} ({authority.PublicKey})
                         </option>
                             )
