@@ -9,6 +9,7 @@ import ipfsClient from 'ipfs-http-client';
 import CreateIdentity from './CreateIdentity';
 import Identity from './Identity';
 import Verifier from './Verifier';
+import User from './User';
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: '5001', protocol: 'https' });
 
 const Api = axios.create({
@@ -157,7 +158,7 @@ class App extends Component {
                 </div>
                 <div className="py-2" />
                 {
-                  role === "user"? <></>:<Verifier />
+                  role === "user" ? <User /> : <Verifier />
                 }
               </div>
               : <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />
