@@ -140,9 +140,10 @@ class App extends Component {
             identity && Array.isArray(processedData) && processedData.length
               ? <div>
                 <Identity data={processedData} authorities={authorities} getIdentity={this.getIdentity} editIdentity={this.createIdentity} />
+                <div className="py-2" />
                 <div className="d-flex justify-content-center align-items-center">
                   <p className="m-0 h3 fw-450">Role:</p>
-                  <div className="px-3" />
+                  <div className="px-2" />
                   <div className="">
                     <select
                       defaultValue={role || 'user'}
