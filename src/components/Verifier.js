@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import uuid from 'react-uuid';
+import { SyncOutlined } from '@ant-design/icons'
 import './styles.css';
 
 const ver = [
@@ -33,15 +34,17 @@ export default class Verifier extends Component {
             value: '',
         },
         reqList: [],
+        reqLoading: true,
         verList: ver || [],
     }
 
     async componentDidMount() {
-        await this.getEvents();
+        await this.getReqEvents();
     }
 
-    getEvents = async () => {
+    getReqEvents = async () => {
         const { contract, account } = this.props;
+        this.setState({reqLoading: true})
         const dataRequestEvent = await contract.getPastEvents(
             'GetDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
@@ -61,10 +64,8 @@ export default class Verifier extends Component {
             return { did: from, attribute, id, value: JSON.parse(signedData.message).value, status: authority ? this.getStatus(1) : "Failed", authority }
         }) : []
 
-        console.log({ reqData });
-
         this.setState(() => {
-            return { reqList: reqData }
+            return { reqList: reqData, reqLoading: false }
         });
     }
 
@@ -101,19 +102,16 @@ export default class Verifier extends Component {
         }
     }
 
-    reqData = async (data = {}) => {
+    reqData = (data = {}) => {
         this.setState({
             reqData: {
                 did: '',
                 attr: '',
             },
         });
-        const id = uuid();
-        try {
-            await data.did && data.attr && this.props.contract.methods.triggerDataRequest(id, data.did, data.attr).send({ from: this.props.account })
-        } catch (err) {
-            console.log({ ...err })
-        }
+        data.did && data.attr ?
+            this.props.contract.methods.triggerDataRequest(uuid(), data.did, data.attr).send({ from: this.props.account }) :
+            window.alert("Input fields are empty...")
     }
 
     verifyData = () => {
@@ -128,8 +126,11 @@ export default class Verifier extends Component {
         window.alert("Request generated successfully");
     }
 
-    getView = (title, data, del) => <>
-        <p className="m-0 h3 fw-450">{title || ''}</p>
+    getView = (title, data, del, loading, onClick) => <>
+        <div className="d-flex align-items-center">
+            <p className="m-0 h3 fw-450">{title || ''}&nbsp;</p>
+            <SyncOutlined spin={loading} style={{ fontSize: "1.3rem", marginTop: "5px" }} onClick={onClick} />
+        </div>
         <div className="py-2" />
         <table className="table">
             <thead>
@@ -161,7 +162,7 @@ export default class Verifier extends Component {
     </>
 
     render() {
-        const { reqData, verifyData, reqList, verList } = this.state;
+        const { reqData, reqLoading, verifyData, reqList, verList } = this.state;
 
         return <>
             <div style={{ width: "800px", margin: "0 auto" }}>
@@ -187,7 +188,7 @@ export default class Verifier extends Component {
                             required />
                     </div>
                     <div className="col-3">
-                        <button className="btn btn-primary btn-block" onClick={async () => await this.reqData(reqData)}>Get data request</button>
+                        <button className="btn btn-primary btn-block" onClick={() => this.reqData(reqData)}>Get data request</button>
                     </div>
                 </div>
                 <div className="row py-1">
@@ -227,9 +228,9 @@ export default class Verifier extends Component {
                 </div>
             </div>
             <div className="py-2" />
-            <div style={{ width: "100%" }}>
+            <div style={{ width: "90%", margin: "0 auto" }}>
                 <p className="m-0 h3 fw-500 text-center">Verifier's logs</p>
-                {this.getView("Date requests", reqList, this.deleteReq)}
+                {this.getView("Date requests", reqList, this.deleteReq, reqLoading, this.getReqEvents)}
                 {this.getView("Verification requests", verList, this.deleteVer)}
             </div>
         </>

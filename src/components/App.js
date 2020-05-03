@@ -10,6 +10,7 @@ import CreateIdentity from './CreateIdentity';
 import Identity from './Identity';
 import Verifier from './Verifier';
 import User from './User';
+import { SyncOutlined } from '@ant-design/icons'
 const ipfs = ipfsClient({ host: 'ipfs.infura.io', port: '5001', protocol: 'https' });
 
 const Api = axios.create({
@@ -23,6 +24,7 @@ class App extends Component {
     super(props);
     this.state = {
       loading: true,
+      reload: false,
       error: false,
       account: null,
       authorities: [],
@@ -79,6 +81,7 @@ class App extends Component {
       userData: data,
       identity: true
     })
+
   }
 
   createIdentity = async (data) => {
@@ -106,7 +109,7 @@ class App extends Component {
   });
 
   render() {
-    const { loading, account, authorities, identity, userData, processedData, role, contract, dataRequestEvent, dataResponseEvent } = this.state;
+    const { loading, reload, account, authorities, identity, userData, processedData, role, contract } = this.state;
 
     if (loading)
       return <Loader className="my-5" />
@@ -115,11 +118,16 @@ class App extends Component {
       <NavBar name="Major Project" account={account} />
       <div className="container-fluid mt-5 pt-5">
         <h1 className="text-center">
+          <div className="d-flex justify-content-center align-items-center">
+            <p className="mb-1">{identity ? "Digital Identity" : "Create Your Digital Identity"}&nbsp;</p>
+            <SyncOutlined spin={reload} style={{ fontSize: "1.8rem", marginTop: "7px" }} onClick={async () => {
+              this.setState({ reload: true });
+              await this.getIdentity();
+              this.setState({ reload: false })
+            }} />
+          </div>
           {
-            identity ? <>
-              <p className="mb-1">Digital Identity</p>
-              <p style={{ fontSize: "20px", fontWeight: "500" }}>{account}</p>
-            </> : "Create Your Digital Identity"
+            identity && <p style={{ fontSize: "20px", fontWeight: "500" }}>{account}</p>
           }
         </h1>
         <div className="py-2" />

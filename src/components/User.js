@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import uuid from 'react-uuid'
+import { SyncOutlined } from '@ant-design/icons'
 import './styles.css';
 
 const ver = [
@@ -24,15 +25,17 @@ export default class User extends Component {
 
     state = {
         reqData: [],
+        reqDataLoading: true,
         verData: ver || []
     }
 
     async componentDidMount() {
-        await this.getEvents();
+        await this.getReqDataEvents();
     }
 
-    getEvents = async () => {
+    getReqDataEvents = async () => {
         const { contract, account } = this.props;
+        this.setState({reqDataLoading: true})
         const dataRequestEvent = await contract.getPastEvents(
             'GetDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
@@ -49,7 +52,7 @@ export default class User extends Component {
         }) : []
 
         this.setState(() => {
-            return { reqData }
+            return { reqData, reqDataLoading: false }
         });
     }
 
@@ -58,8 +61,9 @@ export default class User extends Component {
             case 0: return "Rejected";
             case 1: return "Approved";
             case 2: return "Failed";
-                dafault: return "Pending";
         }
+
+        return "Pending"
     }
 
     getTextColor = (status) => {
@@ -120,8 +124,11 @@ export default class User extends Component {
         window.alert("Request removed successfully");
     }
 
-    getView = (title, data, rej, apr, del) => <>
-        <p className="m-0 h3 fw-450">{title || ''}</p>
+    getView = (title, data, rej, apr, del, loading, onClick) => <>
+        <div className="d-flex align-items-center">
+            <p className="m-0 h3 fw-450">{title || ''}&nbsp;</p>
+            <SyncOutlined spin={loading} style={{ fontSize: "1.3rem", marginTop: "5px" }} onClick={onClick} />
+        </div>
         <div className="py-2" />
         <table className="table">
             <thead>
@@ -155,10 +162,10 @@ export default class User extends Component {
     </>
 
     render() {
-        const { reqData, verData } = this.state;
-        return <div style={{width: "800px", margin: "0 auto"}}>
+        const { reqData, reqDataLoading, verData } = this.state;
+        return <div style={{ maxWidth: "900px", margin: "0 auto" }}>
             <p className="m-0 h3 fw-500 text-center">User's logs</p>
-            {this.getView("Data request", reqData, this.rejectReq, this.approveReq, this.deleteReq)}
+            {this.getView("Data request", reqData, this.rejectReq, this.approveReq, this.deleteReq, reqDataLoading, this.getReqDataEvents)}
             {this.getView("Verification request", verData, this.rejectVer, this.approveVer, this.deleteVer)}
         </div>
     }
