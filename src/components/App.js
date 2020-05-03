@@ -113,7 +113,7 @@ class App extends Component {
 
     return <div>
       <NavBar name="Major Project" account={account} />
-      <div className="container mt-5 pt-5">
+      <div className="container-fluid mt-5 pt-5">
         <h1 className="text-center">
           {
             identity ? <>
@@ -123,10 +123,10 @@ class App extends Component {
           }
         </h1>
         <div className="py-2" />
-        <main role="main" className="d-flex justify-content-center px-0">
+        <main role="main" className="px-0">
           {
             identity && Array.isArray(processedData) && processedData.length
-              ? <div>
+              ? <>
                 <Identity data={processedData} authorities={authorities} getIdentity={this.getIdentity} editIdentity={this.createIdentity} />
                 <div className="py-2" />
                 <div className="d-flex justify-content-center align-items-center">
@@ -155,7 +155,7 @@ class App extends Component {
                       userData={userData} /> :
                     <Verifier contract={contract} account={account} />
                 }
-              </div>
+              </>
               : <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />
           }
         </main>

@@ -156,8 +156,8 @@ export default class User extends Component {
 
     render() {
         const { reqData, verData } = this.state;
-        return <div>
-            <p className="m-0 h3 fw-500 text-center">User logs</p>
+        return <div style={{width: "800px", margin: "0 auto"}}>
+            <p className="m-0 h3 fw-500 text-center">User's logs</p>
             {this.getView("Data request", reqData, this.rejectReq, this.approveReq, this.deleteReq)}
             {this.getView("Verification request", verData, this.rejectVer, this.approveVer, this.deleteVer)}
         </div>

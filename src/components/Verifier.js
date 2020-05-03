@@ -58,7 +58,7 @@ export default class Verifier extends Component {
                 return { did: from, attribute, id, value: null, status: this.getStatus(status) }
             const signedData = JSON.parse(value);
             const authority = window.web3.eth.accounts.recover(signedData);
-            return { did: from, attribute, id, value: signedData, status: authority ? this.getStatus(1) : "Failed", authority }
+            return { did: from, attribute, id, value: JSON.parse(signedData.message).value, status: authority ? this.getStatus(1) : "Failed", authority }
         }) : []
 
         console.log({ reqData });
@@ -137,6 +137,8 @@ export default class Verifier extends Component {
                     <th scope="col" className="text-center">User's DID</th>
                     <th scope="col" className="text-center">Requested Attribute</th>
                     <th scope="col" className="text-center">Status</th>
+                    <th scope="col" className="text-center">Value</th>
+                    <th scope="col" className="text-center">Approved by</th>
                     <th scope="col" className="text-center">Action</th>
                 </tr>
             </thead>
@@ -146,6 +148,8 @@ export default class Verifier extends Component {
                         <td align="center">{item.did}</td>
                         <td align="center">{item.attribute}</td>
                         <td align="center" className={this.getTextColor(item.status)}>{item.status}</td>
+                        <td align="center">{item.value || '--'}</td>
+                        <td align="center">{item.authority || '--'}</td>
                         <td align="center">
                             {item.status !== "Pending" ? <button onClick={() => del(index)}>Delete</button> : '--'}
                         </td>
@@ -159,72 +163,75 @@ export default class Verifier extends Component {
     render() {
         const { reqData, verifyData, reqList, verList } = this.state;
 
-        return <div className="">
-            <div className="row py-1">
-                <div className="col-6">
-                    <input
-                        value={reqData.did || ''}
-                        id="req-did"
-                        type="text"
-                        onChange={(inp) => { inp && this.setState({ reqData: { ...this.state.reqData, did: inp.target.value } }) }}
-                        className="form-control"
-                        placeholder="Enter user's DID"
-                        required />
+        return <>
+            <div style={{ width: "800px", margin: "0 auto" }}>
+                <div className="row py-1">
+                    <div className="col-6">
+                        <input
+                            value={reqData.did || ''}
+                            id="req-did"
+                            type="text"
+                            onChange={(inp) => { inp && this.setState({ reqData: { ...this.state.reqData, did: inp.target.value } }) }}
+                            className="form-control"
+                            placeholder="Enter user's DID"
+                            required />
+                    </div>
+                    <div className="col-3 px-0">
+                        <input
+                            value={reqData.attr || ''}
+                            id="req-attr"
+                            type="text"
+                            onChange={(inp) => { inp && this.setState({ reqData: { ...this.state.reqData, attr: inp.target.value } }) }}
+                            className="form-control"
+                            placeholder="Enter required attribute"
+                            required />
+                    </div>
+                    <div className="col-3">
+                        <button className="btn btn-primary btn-block" onClick={async () => await this.reqData(reqData)}>Get data request</button>
+                    </div>
                 </div>
-                <div className="col-3 px-0">
-                    <input
-                        value={reqData.attr || ''}
-                        id="req-attr"
-                        type="text"
-                        onChange={(inp) => { inp && this.setState({ reqData: { ...this.state.reqData, attr: inp.target.value } }) }}
-                        className="form-control"
-                        placeholder="Enter required attribute"
-                        required />
-                </div>
-                <div className="col-3">
-                    <button className="btn btn-primary btn-block" onClick={async () => await this.reqData(reqData)}>Get data request</button>
+                <div className="row py-1">
+                    <div className="col-3">
+                        <input
+                            value={verifyData.did || ''}
+                            id="req-did"
+                            type="text"
+                            onChange={(inp) => { inp && this.setState({ verifyData: { ...this.state.verifyData, did: inp.target.value } }) }}
+                            className="form-control"
+                            placeholder="Enter user's DID"
+                            required />
+                    </div>
+                    <div className="col-3 pl-0">
+                        <input
+                            value={verifyData.attr || ''}
+                            id="req-attr"
+                            type="text"
+                            onChange={(inp) => { inp && this.setState({ verifyData: { ...this.state.verifyData, attr: inp.target.value } }) }}
+                            className="form-control"
+                            placeholder="Enter required attribute"
+                            required />
+                    </div>
+                    <div className="col-3 px-0">
+                        <input
+                            value={verifyData.value || ''}
+                            id="req-attr"
+                            type="text"
+                            onChange={(inp) => { inp && this.setState({ verifyData: { ...this.state.verifyData, value: inp.target.value } }) }}
+                            className="form-control"
+                            placeholder="Enter required attribute"
+                            required />
+                    </div>
+                    <div className="col-3">
+                        <button className="btn btn-primary btn-block" onClick={this.verifyData}>Verify data request</button>
+                    </div>
                 </div>
             </div>
-            <div className="row py-1">
-                <div className="col-3">
-                    <input
-                        value={verifyData.did || ''}
-                        id="req-did"
-                        type="text"
-                        onChange={(inp) => { inp && this.setState({ verifyData: { ...this.state.verifyData, did: inp.target.value } }) }}
-                        className="form-control"
-                        placeholder="Enter user's DID"
-                        required />
-                </div>
-                <div className="col-3 pl-0">
-                    <input
-                        value={verifyData.attr || ''}
-                        id="req-attr"
-                        type="text"
-                        onChange={(inp) => { inp && this.setState({ verifyData: { ...this.state.verifyData, attr: inp.target.value } }) }}
-                        className="form-control"
-                        placeholder="Enter required attribute"
-                        required />
-                </div>
-                <div className="col-3 px-0">
-                    <input
-                        value={verifyData.value || ''}
-                        id="req-attr"
-                        type="text"
-                        onChange={(inp) => { inp && this.setState({ verifyData: { ...this.state.verifyData, value: inp.target.value } }) }}
-                        className="form-control"
-                        placeholder="Enter required attribute"
-                        required />
-                </div>
-                <div className="col-3">
-                    <button className="btn btn-primary btn-block" onClick={this.verifyData}>Verify data request</button>
-                </div>
-            </div>
-
             <div className="py-2" />
-            <p className="m-0 h3 fw-500 text-center">Verifier logs</p>
-            {this.getView("Date requests", reqList, this.deleteReq)}
-            {this.getView("Verification requests", verList, this.deleteVer)}
-        </div>
+            <div style={{ width: "100%" }}>
+                <p className="m-0 h3 fw-500 text-center">Verifier's logs</p>
+                {this.getView("Date requests", reqList, this.deleteReq)}
+                {this.getView("Verification requests", verList, this.deleteVer)}
+            </div>
+        </>
     }
 }
