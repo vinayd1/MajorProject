@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import uuid from 'react-uuid'
 import './styles.css';
 import CreateIdentity from './CreateIdentity';
 
@@ -6,7 +7,7 @@ export default class Identity extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: props.data,
+            data: props.data || {},
             edit: false
         }
 
@@ -14,12 +15,12 @@ export default class Identity extends Component {
 
     getEditModal = () => {
         const { data, editIdentity, authorities } = this.props;
-        const [name] = data.filter(item => item.key === "Name").map((item) => ({ val: item.value, authority: item.authority }))
+        const [name] = Array.isArray(data) ? data.filter(item => item.key === "Name").map((item) => ({ val: item.value, authority: item.authority })) : []
 
-        const [dob] = data.filter(item => item.key === "DOB").map((item) => ({ val: item.value, authority: item.authority }))
+        const [dob] = Array.isArray(data) ? data.filter(item => item.key === "DOB").map((item) => ({ val: item.value, authority: item.authority })) : []
 
-        const otherData = data.filter(item => item.key !== "DOB" && item.key !== "Name")
-            .map((item) => ({ key: item.key, type: '', val: item.value, authority: item.authority }))
+        const otherData = Array.isArray(data) ? data.filter(item => item.key !== "DOB" && item.key !== "Name")
+            .map((item) => ({ key: item.key, type: '', val: item.value, authority: item.authority })) : []
 
         return <div>
             <div className="d-flex justify-content-end">
@@ -52,7 +53,7 @@ export default class Identity extends Component {
                 </thead>
                 <tbody>
                     {
-                        this.state.data.map((item) => <tr key={item.id}>
+                        this.state.data.map((item) => <tr key={uuid()}>
                             <td align="center">{item.key}</td>
                             <td align="center">{item.value}</td>
                             <td align="center">{item.authorityName}</td>

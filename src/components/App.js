@@ -69,17 +69,6 @@ class App extends Component {
 
   }
 
-  getEvents = async () => {
-    const { contract, account } = this.state;
-    const events = await contract.getPastEvents(
-      'NewEvent',
-      { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
-    );
-    this.setState(() => {
-      return { events }
-    });
-  }
-
   getIdentity = async () => {
     const { contract, account, authorities } = this.state;
     const path = await contract.methods.getIdentity().call({ from: account });
@@ -93,7 +82,6 @@ class App extends Component {
   }
 
   createIdentity = async (data) => {
-    console.log({ data })
     const { contract, account } = this.state
 
     const response = await Api.post('sign', {
@@ -118,7 +106,7 @@ class App extends Component {
   });
 
   render() {
-    const { loading, account, authorities, identity, processedData, role } = this.state;
+    const { loading, account, authorities, identity, userData, processedData, role, contract, dataRequestEvent, dataResponseEvent } = this.state;
 
     if (loading)
       return <Loader className="my-5" />
@@ -159,7 +147,13 @@ class App extends Component {
                 </div>
                 <div className="py-2" />
                 {
-                  role === "user" ? <User /> : <Verifier />
+                  role === "user" ?
+                    <User
+                      contract={contract}
+                      account={account}
+                      data={processedData}
+                      userData={userData} /> :
+                    <Verifier contract={contract} account={account} />
                 }
               </div>
               : <CreateIdentity createIdentity={this.createIdentity} authorities={authorities} />

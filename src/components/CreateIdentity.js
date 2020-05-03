@@ -112,7 +112,6 @@ export default class CreateIdentity extends Component {
                 authority: item.authority,
             }))
         ];
-        console.log({ requestData })
         this.props.createIdentity(requestData)
     }
 
@@ -130,7 +129,6 @@ export default class CreateIdentity extends Component {
     render = () => {
         const { name, dob } = this.state;
         const {authorities} = this.props;
-        console.log({authorities})
         return <div className="content mx-auto" style={{ width: "800px" }}>
             <div className="row py-1">
                 <div className="col-6 rounded-border py-1">Name: </div>

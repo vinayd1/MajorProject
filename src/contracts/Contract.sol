@@ -1,9 +1,9 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.0;
 
 contract Contract {
 
     mapping(address => Identity) identities;
-    mapping(uint => VerificationData) verificationDataList;
+    mapping(string => VerificationData) verificationDataList;
     struct Identity {
         address did;
         string contentAddress;
@@ -13,25 +13,26 @@ contract Contract {
         bool exist;
     }
     event GetDataRequestEvent(
-        uint256 id,
+        string id,
         address indexed from,
         address indexed to,
         string attribute
     );
     event GetDataResponseEvent(
-        uint256 id,
+        string id,
         address indexed from,
         address indexed to,
-        string value
+        string value,
+        uint8 status             //0 => rejected, 1 => approved, 2 => failed
     );
     event VerifyDataRequestEvent(
-        uint256 id,
+        string id,
         address indexed from,
         address indexed to,
         string attribute
     );
     event VerifyDataResponseEvent(
-        uint256 id,
+        string id,
         address indexed from,
         address indexed to,
         address verifier,
@@ -53,23 +54,24 @@ contract Contract {
         identities[msg.sender] = Identity(msg.sender, _contentAddress);
         return true;
     }
-    function triggerDataRequest(uint256 _id, address _to, string memory _attribute) public {
-        require(_id > 0, 'Id is invalid');
-        require(verificationDataList[_id].exist, "Id is not unique");
+    function triggerDataRequest(string memory _id, address _to, string memory _attribute) public {
+        // require(_id > 0, 'Id is invalid');
+        require(!verificationDataList[_id].exist, "Id is not unique");
         require(_to != address(0), "Recipient address not provided");
         require(bytes(_attribute).length > 0, "Attribute not provided");
         emit GetDataRequestEvent(_id, msg.sender, _to, _attribute);
     }
-    function triggerDataResponse(uint256 _id, address _to, string memory _value) public {
-        require(_id > 0, 'Id not provided');
-        require(verificationDataList[_id].exist, "Id is not unique");
+    function triggerDataResponse(string memory _id, address _to, string memory _value, uint8 _status) public {
+        // require(_id > 0, 'Id not provided');
         require(_to != address(0), "Recipient address not provided");
         require(bytes(_value).length > 0, "Value not provided");
-        emit GetDataResponseEvent(_id, msg.sender, _to, _value);
+        require(_status >= 0 && _status <= 2, "Invalid status");
+        verificationDataList[_id].exist = false;
+        emit GetDataResponseEvent(_id, msg.sender, _to, _value, _status);
     }
-    function triggerVerifyRequest(uint256 _id, address _to, string memory _attribute, string memory _value) public {
-        require(_id > 0, 'Id not provided');
-        require(verificationDataList[_id].exist, "Id is not unique");
+    function triggerVerifyRequest(string memory _id, address _to, string memory _attribute, string memory _value) public {
+        // require(_id > 0, 'Id not provided');
+        require(!verificationDataList[_id].exist, "Id is not unique");
         require(_to != address(0), "Recipient address not provided");
         require(bytes(_attribute).length > 0, "Attribute not provided");
         require(bytes(_value).length > 0, "Value not provided");
@@ -77,9 +79,9 @@ contract Contract {
         verificationDataList[_id].exist = true;
         emit VerifyDataRequestEvent(_id, msg.sender, _to, _attribute);
     }
-    function triggerVerifyResponse(uint256 _id, address _to, string memory _value, bytes memory _signature) public {
+    function triggerVerifyResponse(string memory _id, address _to, string memory _value, bytes memory _signature) public {
         verificationDataList[_id].exist = false;
-        require(_id > 0, 'Id not provided');
+        // require(_id > 0, 'Id not provided');
         require(_to != address(0), "Recipient address not provided");
         require(bytes(_value).length > 0, "Value not provided");
         bytes32 r;
