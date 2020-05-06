@@ -80,16 +80,23 @@ contract Contract {
         verificationDataList[_id].exist = true;
         emit VerifyDataRequestEvent(_id, msg.sender, _to, _attribute);
     }
-    function triggerVerifyResponse(string memory _id, address _to, bytes memory _signature, uint8 _status) public {
+
+    function prefixed(bytes32 hash) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    }
+
+    function triggerVerifyResponse(string memory _id, address _to, string memory _key, string memory _value, address  _userPublicKey, string memory _signature, uint8 _status) public {
         verificationDataList[_id].exist = false;
-        // require(_id > 0, 'Id not provided');
         require(_to != address(0), "Recipient address not provided");
         require(_status >= 0 && _status <= 2, "Invalid status");
-        //require(bytes(_value).length > 0, "Value not provided");
+        require(bytes(_value).length > 0, "Value not provided");
+        require(bytes(_key).length > 0, "Key not provided");
+        require(_userPublicKey != address(0), "User Public Key not provided");
+
         bytes32 r;
         bytes32 s;
         uint8 v;
-        if(_signature.length != 65){
+        if(bytes(_signature).length != 65){
             emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false, _status);
             return;
         }
@@ -103,8 +110,10 @@ contract Contract {
             emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false, _status);
             return;
         }
-        address _authority = ecrecover(keccak256(abi.encodePacked(_value)), v, r, s);
-        if(keccak256(abi.encodePacked((verificationDataList[_id].value))) != keccak256(abi.encodePacked((_value)))) {
+        bytes32 part = keccak256(abi.encodePacked(_key, _value, _userPublicKey));
+        bytes32 hash = prefixed(part);
+        address _authority = ecrecover(hash, v, r, s);
+        if(keccak256(abi.encodePacked(verificationDataList[_id].value)) != keccak256(abi.encodePacked(_value))) {
             emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, false, _status);
             return;
         }

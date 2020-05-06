@@ -115,9 +115,15 @@ export default class User extends Component {
     approveVer = (index) => {
         const { verData } = this.state;
         const data = verData[index];
+        console.log(data)
+        const dataAttr = this.props.userData[index];
+        console.log("<<<<");
+        console.log(dataAttr.signature);
+        if(index >= 0)
+        this.props.contract.methods.triggerVerifyResponse(data.id, data.did, JSON.parse(dataAttr.message).key,JSON.parse(dataAttr.message).value,JSON.parse(dataAttr.message).userPublicKey, dataAttr.signature, 1).send({from: this.props.account});
+        else
+            this.props.contract.methods.triggerVerifyResponse(data.id, data.did, "no data", dataAttr.signature, 2).send({from: this.props.account});
 
-        this.props.contract.methods.triggerVerifyResponse(data.id, data.did, )
-        window.alert("Request approved successfully");
     }
 
     rejectVer = (index) => {
