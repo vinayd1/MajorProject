@@ -76,6 +76,8 @@ class App extends Component {
     const path = await contract.methods.getIdentity().call({ from: account });
     if (!path) return this.setState({ userData: [], identity: false });
     const data = JSON.parse((await (await ipfs.get(path).next()).value.content.next()).value.toString());
+    console.log("<<<<<<<<<<<<");
+    console.log(data);
     this.setState({
       processedData: this.getProcessedData(data, authorities),
       userData: data,

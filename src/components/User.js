@@ -3,30 +3,14 @@ import uuid from 'react-uuid'
 import { SyncOutlined } from '@ant-design/icons'
 import './styles.css';
 
-const ver = [
-    { did: '0x50225bE7EdeEfeC7C28e11BBFD5544e29af42Add', attribute: 'Gender', status: 'Pending' },
-    { did: '0xE9439E54DEF1fc50499b3589963c2266B2432511', attribute: 'Name', status: 'Pending' },
-    { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Gender', status: 'Pending' },
-    { did: '0xa8c38Ed8DC407fB8d6Fa807AbB09A43F6427e206', attribute: 'DOB', status: 'Pending' },
-    { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Cerificate', status: 'Pending' },
-    { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Name', status: 'Pending' },
-    { did: '0xa229347C0c11BcDe4654105F6B6971Cd07737D37', attribute: 'DOB', status: 'Pending' },
-    { did: '0xAc5C8a4482D22F38642D01154501660963c85745', attribute: 'DOB', status: 'Pending' },
-    { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
-    { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Marital Status', status: 'Pending' },
-    { did: '0xB22Ab149D58921d842195ffe05b3e83195303a63', attribute: 'Name', status: 'Pending' },
-    { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'Gender', status: 'Pending' },
-    { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
-    { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Marital Status', status: 'Pending' },
-    { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'DOB', status: 'Pending' },
-]
 
 export default class User extends Component {
 
     state = {
         reqData: [],
         reqDataLoading: true,
-        verData: ver || []
+        verData: [],
+        reqVerificationLoading: true
     }
 
     async componentDidMount() {
@@ -51,8 +35,33 @@ export default class User extends Component {
             return { did: from, attribute, id, status: this.getStatus(status) }
         }) : []
 
+
         this.setState(() => {
             return { reqData, reqDataLoading: false }
+        });
+    }
+
+    getReqVerificationEvents = async() => {
+        const { contract, account } = this.props;
+        this.setState({reqVerificationLoading: true});
+
+        const verificationRequestEvent = await contract.getPastEvents(
+            'VerifyDataRequestEvent',
+            { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
+        );
+        const verificationResponseEvent = await contract.getPastEvents(
+            'VerifyDataResponseEvent',
+            { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
+        );
+
+        const verData = Array.isArray(verificationRequestEvent) && Array.isArray(verificationResponseEvent) ? verificationRequestEvent.map(({ returnValues: req = {} } = {}) => {
+            const { from, attribute, id } = req;
+            const [{ returnValues: { status } = {} } = {}] = verificationResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
+            return { did: from, attribute, id, status: this.getStatus(status) }
+        }) : []
+
+        this.setState(() => {
+            return { verData, reqVerificationLoading: false }
         });
     }
 
@@ -105,8 +114,9 @@ export default class User extends Component {
 
     approveVer = (index) => {
         const { verData } = this.state;
-        verData[index].status = 'Approved';
-        this.setState({ verData })
+        const data = verData[index];
+
+        this.props.contract.methods.triggerVerifyResponse(data.id, data.did, )
         window.alert("Request approved successfully");
     }
 
@@ -162,11 +172,11 @@ export default class User extends Component {
     </>
 
     render() {
-        const { reqData, reqDataLoading, verData } = this.state;
+        const { reqData, reqDataLoading, verData, reqVerificationLoading } = this.state;
         return <div style={{ maxWidth: "900px", margin: "0 auto" }}>
             <p className="m-0 h3 fw-500 text-center">User's logs</p>
             {this.getView("Data request", reqData, this.rejectReq, this.approveReq, this.deleteReq, reqDataLoading, this.getReqDataEvents)}
-            {this.getView("Verification request", verData, this.rejectVer, this.approveVer, this.deleteVer)}
+            {this.getView("Verification request", verData, this.rejectVer, this.approveVer, this.deleteVer, reqVerificationLoading, this.getReqVerificationEvents)}
         </div>
     }
 }

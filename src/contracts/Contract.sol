@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 contract Contract {
 
@@ -36,7 +36,8 @@ contract Contract {
         address indexed from,
         address indexed to,
         address verifier,
-        bool status
+        bool verifiedStatus,
+        uint8 status            //0 => rejected, 1 => approved, 2 => failed
     );
 
     function createIdentity(string memory _contentAddress) public returns(bool) {
@@ -79,16 +80,17 @@ contract Contract {
         verificationDataList[_id].exist = true;
         emit VerifyDataRequestEvent(_id, msg.sender, _to, _attribute);
     }
-    function triggerVerifyResponse(string memory _id, address _to, string memory _value, bytes memory _signature) public {
+    function triggerVerifyResponse(string memory _id, address _to, bytes memory _signature, uint8 _status) public {
         verificationDataList[_id].exist = false;
         // require(_id > 0, 'Id not provided');
         require(_to != address(0), "Recipient address not provided");
-        require(bytes(_value).length > 0, "Value not provided");
+        require(_status >= 0 && _status <= 2, "Invalid status");
+        //require(bytes(_value).length > 0, "Value not provided");
         bytes32 r;
         bytes32 s;
         uint8 v;
         if(_signature.length != 65){
-            emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false);
+            emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false, _status);
             return;
         }
         assembly{
@@ -98,14 +100,14 @@ contract Contract {
         }
         if(v < 27) v += 27;
         if(v != 27 && v != 28) {
-            emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false);
+            emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false, _status);
             return;
         }
         address _authority = ecrecover(keccak256(abi.encodePacked(_value)), v, r, s);
         if(keccak256(abi.encodePacked((verificationDataList[_id].value))) != keccak256(abi.encodePacked((_value)))) {
-            emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, false);
+            emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, false, _status);
             return;
         }
-        emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, true);
+        emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, true, _status);
     }
 }
