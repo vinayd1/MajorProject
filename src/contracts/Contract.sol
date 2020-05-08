@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 contract Contract {
 
@@ -29,14 +29,16 @@ contract Contract {
         string id,
         address indexed from,
         address indexed to,
-        string attribute
+        string attribute,
+        string value
     );
     event VerifyDataResponseEvent(
         string id,
         address indexed from,
         address indexed to,
-        address verifier,
-        bool status
+        string signature,
+        bool verifiedStatus,
+        uint8 status            //0 => rejected, 1 => approved, 2 => failed
     );
 
     function createIdentity(string memory _contentAddress) public returns(bool) {
@@ -71,41 +73,46 @@ contract Contract {
     }
     function triggerVerifyRequest(string memory _id, address _to, string memory _attribute, string memory _value) public {
         // require(_id > 0, 'Id not provided');
-        require(!verificationDataList[_id].exist, "Id is not unique");
-        require(_to != address(0), "Recipient address not provided");
-        require(bytes(_attribute).length > 0, "Attribute not provided");
-        require(bytes(_value).length > 0, "Value not provided");
+        //require(verificationDataList[_id].exist, "Id is not unique");
+        //require(_to != address(0), "Recipient address not provided");
+        //require(bytes(_attribute).length > 0, "Attribute not provided");
+        //require(bytes(_value).length > 0, "Value not provided");
         verificationDataList[_id].value = _value;
         verificationDataList[_id].exist = true;
-        emit VerifyDataRequestEvent(_id, msg.sender, _to, _attribute);
+        emit VerifyDataRequestEvent(_id, msg.sender, _to, _attribute, _value);
     }
-    function triggerVerifyResponse(string memory _id, address _to, string memory _value, bytes memory _signature) public {
+
+    function triggerVerifyResponse(string memory _id, address _to, string memory _key, string memory _value, string memory _signature, uint8 _status) public returns (bytes32) {
         verificationDataList[_id].exist = false;
-        // require(_id > 0, 'Id not provided');
         require(_to != address(0), "Recipient address not provided");
+        require(_status >= 0 && _status <= 2, "Invalid status");
         require(bytes(_value).length > 0, "Value not provided");
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        if(_signature.length != 65){
-            emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false);
-            return;
+        require(bytes(_key).length > 0, "Key not provided");
+        //require(_userPublicKey != address(0), "User Public Key not provided");
+
+        // bytes32 r;  
+        // bytes32 s;
+        // uint8 v;
+        // if(bytes(_signature).length != 65){
+        //     emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false, _status);
+        //     return 1;
+        // }
+    //    assembly {
+    //         r := mload(add(_signature, 32))
+    //         s := mload(add(_signature, 64))
+    //         v := byte(0, mload(add(_signature, 96)))
+    //     }
+        // if(v < 27) v += 27;
+        // if(v != 27 && v != 28) {
+        //     emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false, _status);
+        //     return 2;
+        // }
+        // bytes32 hash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n",bytes(_ms).length, _ms));
+        // address _authority = ecrecover(hash, v, r, s);
+        if(keccak256(abi.encodePacked(verificationDataList[_id].value)) == keccak256(abi.encodePacked(_value))) {
+            emit VerifyDataResponseEvent(_id, msg.sender, _to, _signature, true, _status);
         }
-        assembly{
-            r := mload(add(_signature, 0x20))
-            s := mload(add(_signature, 0x40))
-            v := byte(0, mload(add(_signature, 0x60)))
-        }
-        if(v < 27) v += 27;
-        if(v != 27 && v != 28) {
-            emit VerifyDataResponseEvent(_id, msg.sender, _to, address(0), false);
-            return;
-        }
-        address _authority = ecrecover(keccak256(abi.encodePacked(_value)), v, r, s);
-        if(keccak256(abi.encodePacked((verificationDataList[_id].value))) != keccak256(abi.encodePacked((_value)))) {
-            emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, false);
-            return;
-        }
-        emit VerifyDataResponseEvent(_id, msg.sender, _to, _authority, true);
+        else
+        emit VerifyDataResponseEvent(_id, msg.sender, _to, '', false, _status);
     }
 }

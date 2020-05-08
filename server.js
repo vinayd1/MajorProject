@@ -10,9 +10,9 @@ app.use(cors());
 const web3 = new Web3('HTTP://127.0.0.1:7545');
 const dbConfig = {
     host: 'remotemysql.com',
-    user: 'kSBetg5TzM',
-    password: 'gFMB5R25VF',
-    database: 'kSBetg5TzM'
+    user: 'Pv7mdzekq2',
+    password: 'nLyfuAhSG4',
+    database: 'Pv7mdzekq2'
 }
 
 const mysql = require('mysql');

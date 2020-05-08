@@ -3,23 +3,23 @@ import uuid from 'react-uuid';
 import { SyncOutlined } from '@ant-design/icons'
 import './styles.css';
 
-const ver = [
-    { did: '0x50225bE7EdeEfeC7C28e11BBFD5544e29af42Add', attribute: 'Gender', status: 'Pending' },
-    { did: '0xE9439E54DEF1fc50499b3589963c2266B2432511', attribute: 'Name', status: 'Approved' },
-    { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Gender', status: 'Pending' },
-    { did: '0xa8c38Ed8DC407fB8d6Fa807AbB09A43F6427e206', attribute: 'DOB', status: 'Pending' },
-    { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Cerificate', status: 'Approved' },
-    { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Name', status: 'Pending' },
-    { did: '0xa229347C0c11BcDe4654105F6B6971Cd07737D37', attribute: 'DOB', status: 'Failed' },
-    { did: '0xAc5C8a4482D22F38642D01154501660963c85745', attribute: 'DOB', status: 'Rejected' },
-    { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
-    { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Marital Status', status: 'Approved' },
-    { did: '0xB22Ab149D58921d842195ffe05b3e83195303a63', attribute: 'Name', status: 'Pending' },
-    { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'Gender', status: 'Failed' },
-    { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
-    { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Marital Status', status: 'Approved' },
-    { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'DOB', status: 'Pending' },
-]
+// const ver = [
+//     { did: '0x50225bE7EdeEfeC7C28e11BBFD5544e29af42Add', attribute: 'Gender', status: 'Pending' },
+//     { did: '0xE9439E54DEF1fc50499b3589963c2266B2432511', attribute: 'Name', status: 'Approved' },
+//     { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Gender', status: 'Pending' },
+//     { did: '0xa8c38Ed8DC407fB8d6Fa807AbB09A43F6427e206', attribute: 'DOB', status: 'Pending' },
+//     { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Cerificate', status: 'Approved' },
+//     { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Name', status: 'Pending' },
+//     { did: '0xa229347C0c11BcDe4654105F6B6971Cd07737D37', attribute: 'DOB', status: 'Failed' },
+//     { did: '0xAc5C8a4482D22F38642D01154501660963c85745', attribute: 'DOB', status: 'Rejected' },
+//     { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
+//     { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Marital Status', status: 'Approved' },
+//     { did: '0xB22Ab149D58921d842195ffe05b3e83195303a63', attribute: 'Name', status: 'Pending' },
+//     { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'Gender', status: 'Failed' },
+//     { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
+//     { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Marital Status', status: 'Approved' },
+//     { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'DOB', status: 'Pending' },
+// ]
 
 export default class Verifier extends Component {
 
@@ -34,17 +34,19 @@ export default class Verifier extends Component {
             value: '',
         },
         reqList: [],
-        reqLoading: true,
-        verList: ver || [],
+        reqDataLoading: true,
+        verList:  [],
+        reqVerificationLoading: true
     }
 
     async componentDidMount() {
-        await this.getReqEvents();
+        await this.getReqDataEvents();
+        await this.getReqVerificationEvents();
     }
 
-    getReqEvents = async () => {
+    getReqDataEvents = async () => {
         const { contract, account } = this.props;
-        this.setState({reqLoading: true})
+        this.setState({reqDataLoading: true})
         const dataRequestEvent = await contract.getPastEvents(
             'GetDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
@@ -55,17 +57,55 @@ export default class Verifier extends Component {
         );
 
         const reqData = Array.isArray(dataRequestEvent) && Array.isArray(dataResponseEvent) ? dataRequestEvent.map(({ returnValues: req = {} } = {}) => {
-            const { from, attribute, id } = req;
+            const { to, attribute, id } = req;
             const [{ returnValues: { status, value = '' } = {} } = {}] = dataResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
             if (status !== 1)
-                return { did: from, attribute, id, value: null, status: this.getStatus(status) }
+                return { did: to, attribute, id, value: null, status: this.getStatus(status) }
             const signedData = JSON.parse(value);
             const authority = window.web3.eth.accounts.recover(signedData);
-            return { did: from, attribute, id, value: JSON.parse(signedData.message).value, status: authority ? this.getStatus(1) : "Failed", authority }
+            return { did: to, attribute, id, value: JSON.parse(signedData.message).value, status: authority ? this.getStatus(1) : "Failed", authority }
         }) : []
 
         this.setState(() => {
-            return { reqList: reqData, reqLoading: false }
+            return { reqList: reqData, reqDataLoading: false }
+        });
+    }
+
+    getAuthority = (key, value, userPublicKey, signature) => {
+        let message = {
+            key,
+            value,
+            userPublicKey
+        }
+        message = JSON.stringify(message);
+        return window.web3.eth.accounts.recover(message,signature);
+    }
+
+    getReqVerificationEvents = async () => {
+        const { contract, account } = this.props;
+        this.setState({reqVerificationLoading: true})
+
+        const verificationRequestEvent = await contract.getPastEvents(
+            'VerifyDataRequestEvent',
+            { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
+        );
+        console.log('In verification request, array : ', verificationRequestEvent);
+        const verificationResponseEvent = await contract.getPastEvents(
+            'VerifyDataResponseEvent',
+            { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
+        );
+
+        const verData = Array.isArray(verificationRequestEvent) ? verificationRequestEvent.map(({ returnValues: req = {} } = {}) => {
+            const {to, value, attribute, id } = req;
+            const [{ returnValues: { verifiedStatus, signature, status = '' } = {} } = {}] = verificationResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
+            if (verifiedStatus === true) {
+                const authority = this.getAuthority(attribute, value, to, signature);
+                return {did: to, attribute, id, authority, value: true, status: this.getStatus(status)};
+            }
+                return { did: to, attribute, id, value: false, status: this.getStatus(status) }
+        }) : [];
+        this.setState(() => {
+            return { verList: verData, reqVerificationLoading: false }
         });
     }
 
@@ -114,16 +154,18 @@ export default class Verifier extends Component {
             window.alert("Input fields are empty...")
     }
 
-    verifyData = () => {
+    verifyData = (data = {}) => {
+        console.log('TLEAST HERE');
         this.setState({
             verifyData: {
                 did: '',
                 attr: '',
                 value: '',
             }
-        })
-
-        window.alert("Request generated successfully");
+        });
+        data.did && data.attr && data.value ?
+            this.props.contract.methods.triggerVerifyRequest(uuid(), data.did, data.attr, data.value).send({from: this.props.account}) :
+            window.alert("Input fields are empty");
     }
 
     getView = (title, data, del, loading, onClick) => <>
@@ -149,7 +191,7 @@ export default class Verifier extends Component {
                         <td align="center">{item.did}</td>
                         <td align="center">{item.attribute}</td>
                         <td align="center" className={this.getTextColor(item.status)}>{item.status}</td>
-                        <td align="center">{item.value || '--'}</td>
+                        <td align="center">{item.value !== null && item.value !== undefined ? `${item.value}` : '--'}</td>
                         <td align="center">{item.authority || '--'}</td>
                         <td align="center">
                             {item.status !== "Pending" ? <button onClick={() => del(index)}>Delete</button> : '--'}
@@ -162,7 +204,7 @@ export default class Verifier extends Component {
     </>
 
     render() {
-        const { reqData, reqLoading, verifyData, reqList, verList } = this.state;
+        const { reqData, reqVerificationLoading, verifyData, reqList, verList, reqDataLoading } = this.state;
 
         return <>
             <div style={{ width: "800px", margin: "0 auto" }}>
@@ -223,15 +265,16 @@ export default class Verifier extends Component {
                             required />
                     </div>
                     <div className="col-3">
-                        <button className="btn btn-primary btn-block" onClick={this.verifyData}>Verify data request</button>
+                        <button className="btn btn-primary btn-block" onClick={() => this.verifyData(verifyData)}>Verify data request</button>
                     </div>
                 </div>
             </div>
             <div className="py-2" />
             <div style={{ width: "90%", margin: "0 auto" }}>
                 <p className="m-0 h3 fw-500 text-center">Verifier's logs</p>
-                {this.getView("Date requests", reqList, this.deleteReq, reqLoading, this.getReqEvents)}
-                {this.getView("Verification requests", verList, this.deleteVer)}
+                {console.log(this.state.verList)}
+                {this.getView("Date requests", reqList, this.deleteReq, reqDataLoading, this.getReqDataEvents)}
+                {this.getView("Verification requests", verList, this.deleteVer,reqVerificationLoading, this.getReqVerificationEvents)}
             </div>
         </>
     }
