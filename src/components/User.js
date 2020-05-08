@@ -124,9 +124,9 @@ export default class User extends Component {
         console.log("<<<<");
         console.log(JSON.parse(dataAttr.message).value);
         if(i >= 0)
-        this.props.contract.methods.triggerVerifyResponse(data.id, data.did, JSON.parse(dataAttr.message).key,JSON.parse(dataAttr.message).value,dataAttr.signature, dataAttr.signature, 1).send({from: this.props.account});
+        this.props.contract.methods.triggerVerifyResponse(data.id, data.did, JSON.parse(dataAttr.message).key,JSON.parse(dataAttr.message).value,dataAttr.signature, 1).send({from: this.props.account});
         else
-            this.props.contract.methods.triggerVerifyResponse(data.id, data.did, "no data", dataAttr.signature, 2).send({from: this.props.account});
+            this.props.contract.methods.triggerVerifyResponse(data.id, data.did, "no key", "no value", dataAttr.signature, 2).send({from: this.props.account});
 
     }
 

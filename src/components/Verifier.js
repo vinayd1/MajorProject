@@ -99,8 +99,7 @@ export default class Verifier extends Component {
             const {to, value, attribute, id } = req;
             const [{ returnValues: { verifiedStatus, signature, status = '' } = {} } = {}] = verificationResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
             if (verifiedStatus === true) {
-                console.log('here ', signature);
-                const authority = this.getAuthority(attribute, value, to)
+                const authority = this.getAuthority(attribute, value, to, signature);
                 return {did: to, attribute, id, authority, value: true, status: this.getStatus(status)};
             }
                 return { did: to, attribute, id, value: false, status: this.getStatus(status) }
@@ -192,7 +191,7 @@ export default class Verifier extends Component {
                         <td align="center">{item.did}</td>
                         <td align="center">{item.attribute}</td>
                         <td align="center" className={this.getTextColor(item.status)}>{item.status}</td>
-                        <td align="center">{item.value || '--'}</td>
+                        <td align="center">{item.value !== null && item.value !== undefined ? `${item.value}` : '--'}</td>
                         <td align="center">{item.authority || '--'}</td>
                         <td align="center">
                             {item.status !== "Pending" ? <button onClick={() => del(index)}>Delete</button> : '--'}
@@ -273,6 +272,7 @@ export default class Verifier extends Component {
             <div className="py-2" />
             <div style={{ width: "90%", margin: "0 auto" }}>
                 <p className="m-0 h3 fw-500 text-center">Verifier's logs</p>
+                {console.log(this.state.verList)}
                 {this.getView("Date requests", reqList, this.deleteReq, reqDataLoading, this.getReqDataEvents)}
                 {this.getView("Verification requests", verList, this.deleteVer,reqVerificationLoading, this.getReqVerificationEvents)}
             </div>
