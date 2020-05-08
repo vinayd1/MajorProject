@@ -57,18 +57,28 @@ export default class Verifier extends Component {
         );
 
         const reqData = Array.isArray(dataRequestEvent) && Array.isArray(dataResponseEvent) ? dataRequestEvent.map(({ returnValues: req = {} } = {}) => {
-            const { from, attribute, id } = req;
+            const { to, attribute, id } = req;
             const [{ returnValues: { status, value = '' } = {} } = {}] = dataResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
             if (status !== 1)
-                return { did: from, attribute, id, value: null, status: this.getStatus(status) }
+                return { did: to, attribute, id, value: null, status: this.getStatus(status) }
             const signedData = JSON.parse(value);
             const authority = window.web3.eth.accounts.recover(signedData);
-            return { did: from, attribute, id, value: JSON.parse(signedData.message).value, status: authority ? this.getStatus(1) : "Failed", authority }
+            return { did: to, attribute, id, value: JSON.parse(signedData.message).value, status: authority ? this.getStatus(1) : "Failed", authority }
         }) : []
 
         this.setState(() => {
             return { reqList: reqData, reqDataLoading: false }
         });
+    }
+
+    getAuthority = (key, value, userPublicKey, signature) => {
+        let message = {
+            key,
+            value,
+            userPublicKey
+        }
+        message = JSON.stringify(message);
+        return window.web3.eth.accounts.recover(message,signature);
     }
 
     getReqVerificationEvents = async () => {
@@ -79,20 +89,22 @@ export default class Verifier extends Component {
             'VerifyDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
         );
+        console.log('In verification request, array : ', verificationRequestEvent);
         const verificationResponseEvent = await contract.getPastEvents(
             'VerifyDataResponseEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
         );
 
-        const verData = Array.isArray(verificationRequestEvent) && Array.isArray(verificationResponseEvent) ? verificationRequestEvent.map(({ returnValues: req = {} } = {}) => {
-            const { from, attribute, id } = req;
-            const [{ returnValues: { verifiedStatus, status = '' } = {} } = {}] = verificationResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
-            if (verifiedStatus !== true)
-                return { did: from, attribute, id, value: true, status: this.getStatus(status) }
-            else
-                return { did: from, attribute, id, value: false, status: this.getStatus(status) }
+        const verData = Array.isArray(verificationRequestEvent) ? verificationRequestEvent.map(({ returnValues: req = {} } = {}) => {
+            const {to, value, attribute, id } = req;
+            const [{ returnValues: { verifiedStatus, signature, status = '' } = {} } = {}] = verificationResponseEvent.filter(({ returnValues: res = {} } = {}) => res.id && res.id === req.id);
+            if (verifiedStatus === true) {
+                console.log('here ', signature);
+                const authority = this.getAuthority(attribute, value, to)
+                return {did: to, attribute, id, authority, value: true, status: this.getStatus(status)};
+            }
+                return { did: to, attribute, id, value: false, status: this.getStatus(status) }
         }) : [];
-
         this.setState(() => {
             return { verList: verData, reqVerificationLoading: false }
         });
@@ -144,6 +156,7 @@ export default class Verifier extends Component {
     }
 
     verifyData = (data = {}) => {
+        console.log('TLEAST HERE');
         this.setState({
             verifyData: {
                 did: '',
