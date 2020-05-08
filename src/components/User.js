@@ -15,6 +15,7 @@ export default class User extends Component {
 
     async componentDidMount() {
         await this.getReqDataEvents();
+        await this.getReqVerificationEvents();
     }
 
     getReqDataEvents = async () => {
@@ -49,6 +50,7 @@ export default class User extends Component {
             'VerifyDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
         );
+        console.log('in user ', verificationRequestEvent);
         const verificationResponseEvent = await contract.getPastEvents(
             'VerifyDataResponseEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
