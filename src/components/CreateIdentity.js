@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
+import uuid from 'react-uuid';
 import './styles.css';
+import { CloseCircleFilled } from '@ant-design/icons';
 
 const selectType = [
     { display: "Text", value: "text" },
@@ -22,8 +24,8 @@ export default class CreateIdentity extends Component {
         data: this.props.data && this.props.data.data || []
     }
 
-    getInput = (data, index) => <div key={index} className="row py-1">
-        <div className="col-3 px-0">
+    getInput = (data, index) => <div key={uuid()} className="row flex-nowrap py-1">
+        <div className="col-4 px-0">
             <input
                 value={data.key || ''}
                 id={`key-${index}`}
@@ -37,7 +39,7 @@ export default class CreateIdentity extends Component {
                 placeholder="Key"
                 required />
         </div>
-        <div className="col-3 pr-0">
+        <div className="col-2 pr-0">
             <select
                 defaultValue='text'
                 id={`type-${index}`}
@@ -91,6 +93,10 @@ export default class CreateIdentity extends Component {
                 }
             </select>
         </div>
+        <div className="px-1" />
+        <div className="text-danger d-flex align-items-center"  onClick={() => this.remove(index)}>
+            <CloseCircleFilled />
+        </div>
     </div>
 
     submit = () => {
@@ -126,9 +132,15 @@ export default class CreateIdentity extends Component {
         this.setState({ data })
     }
 
+    remove = (index) => {
+        const { data } = this.state;
+        const filteredData = data.filter((_, i) => i !== index);
+        this.setState({ data: filteredData })
+    }
+
     render = () => {
         const { name, dob } = this.state;
-        const {authorities} = this.props;
+        const { authorities } = this.props;
         return <div className="content mx-auto" style={{ width: "800px" }}>
             <div className="row py-1">
                 <div className="col-6 rounded-border py-1">Name: </div>

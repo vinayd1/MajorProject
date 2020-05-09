@@ -20,7 +20,7 @@ export default class User extends Component {
 
     getReqDataEvents = async () => {
         const { contract, account } = this.props;
-        this.setState({reqDataLoading: true})
+        this.setState({ reqDataLoading: true })
         const dataRequestEvent = await contract.getPastEvents(
             'GetDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
@@ -42,15 +42,14 @@ export default class User extends Component {
         });
     }
 
-    getReqVerificationEvents = async() => {
+    getReqVerificationEvents = async () => {
         const { contract, account } = this.props;
-        this.setState({reqVerificationLoading: true});
+        this.setState({ reqVerificationLoading: true });
 
         const verificationRequestEvent = await contract.getPastEvents(
             'VerifyDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
         );
-        console.log('in user ', verificationRequestEvent);
         const verificationResponseEvent = await contract.getPastEvents(
             'VerifyDataResponseEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
@@ -104,7 +103,7 @@ export default class User extends Component {
         const { reqData } = this.state;
         const data = reqData[index];
 
-        this.props.contract.methods.triggerDataResponse(data.id, data.did, 'no data', 0).send({ from: this.props.account });
+        this.props.contract.methods.triggerDataResponse(data.id, data.did, '', 0).send({ from: this.props.account });
     }
 
     deleteReq = (index) => {
@@ -117,24 +116,22 @@ export default class User extends Component {
     approveVer = (index) => {
         const { verData } = this.state;
         const data = verData[index];
-        console.log(data)
 
         const i = this.props.data.findIndex(({ key } = {}) => key === data.attribute);
-        const dataAttr = this.props.userData[i];
-        console.log("<<<<");
-        console.log(JSON.parse(dataAttr.message).value);
-        if(i >= 0)
-        this.props.contract.methods.triggerVerifyResponse(data.id, data.did, JSON.parse(dataAttr.message).key,JSON.parse(dataAttr.message).value,dataAttr.signature, 1).send({from: this.props.account});
+        if (i >= 0) {
+            const dataAttr = this.props.userData[i];
+            this.props.contract.methods.triggerVerifyResponse(data.id, data.did, JSON.parse(dataAttr.message).value, dataAttr.signature, 1).send({ from: this.props.account });
+        }
         else
-            this.props.contract.methods.triggerVerifyResponse(data.id, data.did, "no key", "no value", dataAttr.signature, 2).send({from: this.props.account});
+            this.props.contract.methods.triggerVerifyResponse(data.id, data.did, '', '', 2).send({ from: this.props.account });
 
     }
 
     rejectVer = (index) => {
         const { verData } = this.state;
-        verData[index].status = 'Rejected';
-        this.setState({ verData })
-        window.alert("Request rejected successfully");
+        const data = verData[index];
+
+        this.props.contract.methods.triggerDataResponse(data.id, data.did, '', '', 0).send({ from: this.props.account });
     }
 
     deleteVer = (index) => {

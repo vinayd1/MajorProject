@@ -3,24 +3,6 @@ import uuid from 'react-uuid';
 import { SyncOutlined } from '@ant-design/icons'
 import './styles.css';
 
-// const ver = [
-//     { did: '0x50225bE7EdeEfeC7C28e11BBFD5544e29af42Add', attribute: 'Gender', status: 'Pending' },
-//     { did: '0xE9439E54DEF1fc50499b3589963c2266B2432511', attribute: 'Name', status: 'Approved' },
-//     { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Gender', status: 'Pending' },
-//     { did: '0xa8c38Ed8DC407fB8d6Fa807AbB09A43F6427e206', attribute: 'DOB', status: 'Pending' },
-//     { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Cerificate', status: 'Approved' },
-//     { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Name', status: 'Pending' },
-//     { did: '0xa229347C0c11BcDe4654105F6B6971Cd07737D37', attribute: 'DOB', status: 'Failed' },
-//     { did: '0xAc5C8a4482D22F38642D01154501660963c85745', attribute: 'DOB', status: 'Rejected' },
-//     { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
-//     { did: '0x335b6ca553D2681E03A0EE1746Ffdafa52b211A1', attribute: 'Marital Status', status: 'Approved' },
-//     { did: '0xB22Ab149D58921d842195ffe05b3e83195303a63', attribute: 'Name', status: 'Pending' },
-//     { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'Gender', status: 'Failed' },
-//     { did: '0x14084f5c44E18FFBecE53c13F176bE417b1F950C', attribute: 'Name', status: 'Pending' },
-//     { did: '0x039cB2bAbb2582D6fB32a13991b1b8418758787e', attribute: 'Marital Status', status: 'Approved' },
-//     { did: '0x5e7cAd0e20b100Ecce3D42f3f564432D219edc5d', attribute: 'DOB', status: 'Pending' },
-// ]
-
 export default class Verifier extends Component {
 
     state = {
@@ -89,7 +71,6 @@ export default class Verifier extends Component {
             'VerifyDataRequestEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { from: account } }
         );
-        console.log('In verification request, array : ', verificationRequestEvent);
         const verificationResponseEvent = await contract.getPastEvents(
             'VerifyDataResponseEvent',
             { fromBlock: 0, toBlock: 'latest', filter: { to: account } }
@@ -155,7 +136,6 @@ export default class Verifier extends Component {
     }
 
     verifyData = (data = {}) => {
-        console.log('TLEAST HERE');
         this.setState({
             verifyData: {
                 did: '',
@@ -272,7 +252,6 @@ export default class Verifier extends Component {
             <div className="py-2" />
             <div style={{ width: "90%", margin: "0 auto" }}>
                 <p className="m-0 h3 fw-500 text-center">Verifier's logs</p>
-                {console.log(this.state.verList)}
                 {this.getView("Date requests", reqList, this.deleteReq, reqDataLoading, this.getReqDataEvents)}
                 {this.getView("Verification requests", verList, this.deleteVer,reqVerificationLoading, this.getReqVerificationEvents)}
             </div>
