@@ -5,7 +5,6 @@
   "author": "gregory@dappuniversity.com",
   "dependencies": {
     "@ant-design/icons": "^4.1.0",
-    "antd": "^4.1.4",
     "axios": "^0.19.2",
     "babel-polyfill": "6.26.0",
     "babel-preset-env": "1.7.0",

@@ -7,6 +7,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+const port = 8000
 const web3 = new Web3('HTTP://127.0.0.1:7545');
 const dbConfig = {
     host: 'remotemysql.com',
@@ -17,14 +18,19 @@ const dbConfig = {
 
 const mysql = require('mysql');
 const connection = mysql.createConnection(dbConfig);
-
-connection.connect(() => console.log("<<<<Connected to mySQL database>>>>"));
-
 const sqlTableQueries = {
     createAuthoritiesTable: `Create table if not exists Authority(AuthorityName varchar(100),PrivateKey varchar(100),PublicKey varchar(100));`
 }
 
-connection.query(sqlTableQueries.createAuthoritiesTable, (err) => {if(err) throw err});
+connection.connect(() => {
+    console.log("<<<<Connected to mySQL database>>>>");
+    connection.query(sqlTableQueries.createAuthoritiesTable, (err) => { if (err) throw err });
+    app.listen(port, (err) => {
+        if (err) {
+            throw err
+        } else console.log(`Server is running on port ${port}.`);
+    });
+});
 
 app.post('/authority', async (req, res) => {
     const details = req.body.jsonObject;
@@ -84,11 +90,4 @@ app.post('/sign', async (req, res) => {
     }
 
     res.status(200).send(signedData);
-});
-
-const port = 8000
-app.listen(port, (err) => {
-    if(err) {
-        throw err
-    } else console.log(`Server is running on port ${port}.`);
 });
