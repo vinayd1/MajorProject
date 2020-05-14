@@ -83,7 +83,9 @@ export default class Verifier extends Component {
                 const authority = this.getAuthority(attribute, value, to, signature);
                 return {did: to, attribute, id, authority, value: true, status: this.getStatus(status)};
             }
+            if(verifiedStatus === false)
                 return { did: to, attribute, id, value: false, status: this.getStatus(status) }
+            return { did: to, attribute, id, value: null, status: this.getStatus(status) }
         }) : [];
         this.setState(() => {
             return { verList: verData, reqVerificationLoading: false }

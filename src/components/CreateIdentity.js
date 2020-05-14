@@ -24,7 +24,7 @@ export default class CreateIdentity extends Component {
         data: this.props.data && this.props.data.data || []
     }
 
-    getInput = (data, index) => <div key={uuid()} className="row flex-nowrap py-1">
+    getInput = (data, index) => <div key={data.id} className="row flex-nowrap py-1">
         <div className="col-4 px-0">
             <input
                 value={data.key || ''}
@@ -41,6 +41,7 @@ export default class CreateIdentity extends Component {
         </div>
         <div className="col-2 pr-0">
             <select
+                value={this.state.data[index].type}
                 defaultValue='text'
                 id={`type-${index}`}
                 onChange={(inp) => {
@@ -124,6 +125,7 @@ export default class CreateIdentity extends Component {
     addMore = () => {
         const { data } = this.state;
         data.push({
+            id: uuid(),
             key: '',
             type: 'text',
             val: null,
